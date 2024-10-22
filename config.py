@@ -10,4 +10,6 @@ class CONFIG:
 
 client_mongo = pymongo.MongoClient(CONFIG.MONGO_URI, tlsCAFile=certifi.where())
 users = client_mongo.insperjr.users
+alunos = client_mongo.insperjr.alunos
 tokens = client_mongo.insperjr.tokens
+avisos = client_mongo.insperjr.avisos

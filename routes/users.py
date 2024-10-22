@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
-from config import users, tokens
+from config import users, tokens, alunos
 from bson.objectid import ObjectId
 from flask_bcrypt import Bcrypt
 
@@ -15,12 +15,22 @@ def register():
         encrypted_password = bcrypt.generate_password_hash(data['password']).decode('utf-8')
         user = {
             "email": data["email"],
+            "cpf": data["cpf"],
             "password": encrypted_password,
             "permissao": data["permissao"].upper(),
             "nome": data["nome"].capitalize()
         }
         if users.find_one({"email": data["email"]}):
             return {"error": "Email already registered"}, 400
+        if user["permissao"] == "ALUNO":
+            user_aluno = {
+                "email": data["email"],
+                "cpf": data["cpf"],
+                "nome": data["nome"].capitalize(),
+                "notas": {},
+                "grade": {}
+            }
+            alunos.insert_one(user_aluno)
         users.insert_one(user)
         return {"message": "User registered successfully"}, 201
     except Exception as e:

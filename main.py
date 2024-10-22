@@ -19,10 +19,13 @@ client = pymongo.MongoClient(CONFIG.MONGO_URI, tlsCAFile=certifi.where())
 
 from routes.auth import auth_bp
 from routes.users import users_bp
+from routes.avisos import avisos_bp
+from routes.alunos import alunos_bp
 
 app.register_blueprint(users_bp)
 app.register_blueprint(auth_bp)
-
+app.register_blueprint(avisos_bp)
+app.register_blueprint(alunos_bp)
 
 
 if __name__ == '__main__':
