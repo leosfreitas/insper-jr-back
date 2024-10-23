@@ -7,7 +7,6 @@ from flask_bcrypt import Bcrypt
 import datetime
 
 auth_bp = Blueprint('auth_bp', __name__)
-
 bcrypt = Bcrypt()
 
 def remove_expired_tokens():
@@ -28,6 +27,10 @@ def login():
         if user and bcrypt.check_password_hash(user['password'], data['password']):
             expires = datetime.timedelta(days=10)
             access_token = create_access_token(identity=str(user['_id']), expires_delta=expires)
+            
+            if isinstance(access_token, bytes):
+                access_token = access_token.decode('utf-8')
+
             expira_em = datetime.datetime.utcnow() + expires
             tokens.insert_one({
                 "email": data["email"], 
@@ -40,6 +43,7 @@ def login():
             return {"error": "Invalid email or password"}, 401
     except Exception as e:
         return {"error": str(e)}, 500
+
 
 @auth_bp.route('/logout', methods=['POST'])
 @jwt_required()
