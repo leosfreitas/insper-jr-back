@@ -46,5 +46,20 @@ def getAluno(cpf):
     except Exception as e:
         return {"error": str(e)}, 500
 
+@alunos_bp.route('/aluno/grade/<data>', methods=['GET'])
+def getGrade(data):
+    try:
+        token = request.headers.get('Authorization')[7:]
+        user = tokens.find_one({'token': token})
+        email = user['email']
+        aluno = alunos.find_one({'email': email})
+
+        if data not in aluno['grade']:
+            return jsonify({"Data não encontrada": ""}), 200
+
+        return jsonify(aluno['grade'][data]), 200
+    except Exception as e:
+        return {"error": str(e)}, 500
+
 
         
