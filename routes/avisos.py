@@ -12,7 +12,6 @@ async def post_avisos(aviso: Aviso, user: dict = Depends(verify_token)):
         email = user['email']
         user1 = await user_collection.find_one({'email': email})
         permission = user1['permissao']
-
         if permission == 'GESTAO':
             await avisos_collection.insert_one({
                 'titulo': aviso.titulo,
@@ -29,31 +28,26 @@ async def post_avisos(aviso: Aviso, user: dict = Depends(verify_token)):
 @router.get("/get")
 async def get_avisos(user: dict = Depends(verify_token)):
     try:
-        lista_avisos = []
-        async for aviso in avisos_collection.find({}):
-            aviso['_id'] = str(aviso['_id'])
-            lista_avisos.append(aviso)
-
-        return JSONResponse(content={'avisos': lista_avisos}, status_code=200)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    
-@router.get("/get/{tipo}")
-async def get_avisos(tipo: str = "", user: dict = Depends(verify_token)):
-    try:
-        lista_avisos = []
-        
-        if tipo:
-            async for aviso in avisos_collection.find({'tipo': tipo}):
-                aviso['_id'] = str(aviso['_id'])
-                lista_avisos.append(aviso)
-        else:
+        email = user['email']
+        user = await user_collection.find_one({'email': email})
+        permission = user['permissao']
+        if permission == 'GESTAO':
+            lista_avisos = []
             async for aviso in avisos_collection.find({}):
                 aviso['_id'] = str(aviso['_id'])
                 lista_avisos.append(aviso)
-
-        return JSONResponse(content={'avisos': lista_avisos}, status_code=200)
+            return JSONResponse(content={'avisos': lista_avisos}, status_code=200)
+        sala = user.get('sala')
+        if not sala:
+            raise HTTPException(status_code=401, detail='Usuário não possui sala')
+        avisos_geral = []
+        avisos_sala = []
+        async for aviso in avisos_collection.find({}):
+            aviso['_id'] = str(aviso['_id'])
+            if aviso['tipo'] == 'Geral':
+                avisos_geral.append(aviso)
+            elif aviso['tipo'] == sala:
+                avisos_sala.append(aviso)
+        return JSONResponse(content={'avisosGeral': avisos_geral, 'avisosSala': avisos_sala, 'sala': sala}, status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
