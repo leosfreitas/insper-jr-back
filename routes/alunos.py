@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from database import user_collection
 from utils.token import verify_token
-from schemas.alunos import AlunoCreate, AlunoResponse
+from schemas.alunos import AlunoCreate, AlunoResponse, AlunoEdit
 from utils.hash import hash_password
 
 router = APIRouter()
@@ -39,6 +39,45 @@ async def create_aluno(aluno: AlunoCreate, user: dict = Depends(verify_token)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+@router.put("/update/{cpf}", response_model=dict)
+async def update_aluno(cpf: str, aluno: AlunoEdit, user: dict = Depends(verify_token)):
+    try:
+        email = user['email']
+        user_data = await user_collection.find_one({'email': email})
+        permission = user_data['permissao']
+        existing_aluno = await user_collection.find_one({'cpf': cpf})
+
+        if permission != "GESTAO":
+            raise HTTPException(status_code=401, detail="Permissão negada")
+
+        if aluno.email != existing_aluno['email'] and await user_collection.find_one({"email": aluno.email}):
+            raise HTTPException(status_code=400, detail="Email já registrado")
+        
+        if existing_aluno is None:
+            raise HTTPException(status_code=404, detail="Aluno não encontrado")
+        
+        updated_fields = {}
+
+        if aluno.nome and aluno.nome != existing_aluno['nome']:
+            updated_fields["nome"] = aluno.nome.capitalize()
+
+        if aluno.email and aluno.email != existing_aluno['email']:
+            updated_fields["email"] = aluno.email 
+
+        if aluno.sala and aluno.sala != existing_aluno['sala']:
+            updated_fields["sala"] = aluno.sala
+
+        if not updated_fields:
+            raise HTTPException(status_code=400, detail="Nenhuma alteração encontrada")
+
+        await user_collection.update_one({'cpf': cpf}, {"$set": updated_fields})
+
+        return {"detail": "Aluno atualizado com sucesso"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     
 @router.delete("/delete/{cpf}", response_model=dict)
 async def delete_aluno(cpf: str, user: dict = Depends(verify_token)):
