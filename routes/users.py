@@ -1,55 +1,49 @@
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required
-from config import users, tokens, alunos
-from bson.objectid import ObjectId
-from flask_bcrypt import Bcrypt
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer
+from fastapi.responses import JSONResponse
+from database import user_collection, tokens_collection , alunos_collection
+from schemas.user import UserCreate, UserResponse  
+from utils.hash import hash_password
 
-users_bp = Blueprint('users_bp', __name__)
+router = APIRouter()
 
-bcrypt = Bcrypt()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")  
 
-@users_bp.route('/user', methods=['POST'])
-def register():
+@router.post("/register", response_model=UserResponse)
+async def register(user: UserCreate):
     try:
-        data = request.get_json()
-        encrypted_password = bcrypt.generate_password_hash(data['password']).decode('utf-8')
-        user = {
-            "email": data["email"],
-            "cpf": data["cpf"],
-            "password": encrypted_password,
-            "permissao": data["permissao"].upper(),
-            "nome": data["nome"].capitalize()
-        }
-        if users.find_one({"email": data["email"]}):
-            return {"error": "Email already registered"}, 400
-        if user["permissao"] == "ALUNO":
-            user_aluno = {
-                "email": data["email"],
-                "cpf": data["cpf"],
-                "nome": data["nome"].capitalize(),
-                "notas": {},
-                "grade": {}
-            }
-            alunos.insert_one(user_aluno)
-        users.insert_one(user)
-        return {"message": "User registered successfully"}, 201
+        user_dict = user.dict()
+        user_dict["password"] = hash_password(user_dict["password"])
+        user_dict["permissao"] = user_dict["permissao"].upper()
+        user_dict["nome"] = user_dict["nome"].capitalize()
+
+        if await user_collection.find_one({"email": user_dict["email"]}):
+            raise HTTPException(status_code=400, detail="Email já registrado")
+        
+        new_user = await user_collection.insert_one(user_dict)
+        created_user = await user_collection.find_one({"_id": new_user.inserted_id})
+        created_user["id"] = str(created_user["_id"])
+        del created_user["_id"]
+        
+        return UserResponse(**created_user)
+
     except Exception as e:
-        return {"error": str(e)}, 500
+        raise HTTPException(status_code=500, detail=str(e))
 
-@users_bp.route('/user-permission', methods=['POST'])
-@jwt_required()
-def getUserPermission():
+@router.post("/permission")
+async def get_user_permission(token: str = Depends(oauth2_scheme)):
     try:
-        data = request.get_json()
-        token = data["token"]
-        user_token = tokens.find_one({'token': token})
+        user_token = await tokens_collection.find_one({"token": token})
         if not user_token:
-            return jsonify({"permissao": None}), 200
+            return JSONResponse(content={"permissao": None}, status_code=200)
+
         email = user_token["email"]
-        user = users.find_one({"email": email})
+        user = await user_collection.find_one({"email": email})
         if not user:
-            return jsonify({"permissao": None}), 200
+            return JSONResponse(content={"permissao": None}, status_code=200)
+
         permissao = user["permissao"]
-        return jsonify({"permissao": permissao}), 200
+        return JSONResponse(content={"permissao": permissao}, status_code=200)
+
     except Exception as e:
-        return jsonify({"permissao": None}), 500
+        return JSONResponse(content={"permissao": None}, status_code=500)

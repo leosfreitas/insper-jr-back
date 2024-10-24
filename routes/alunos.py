@@ -1,65 +1,88 @@
-from flask_jwt_extended import jwt_required
-from flask import Blueprint, request, jsonify
-from config import alunos, tokens, users
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
+from typing import List
+from database import user_collection
+from utils.token import verify_token
+from models.alunos import Aluno  
+from schemas.alunos import AlunoCreate
+from utils.hash import hash_password
 
-alunos_bp = Blueprint('alunos_bp', __name__)
+router = APIRouter()
 
-@alunos_bp.route('/aluno', methods=['GET'])
-@jwt_required()
-def getAlunos():
+@router.post("/create", response_model=dict)
+async def create_aluno(aluno: AlunoCreate, user: dict = Depends(verify_token)):
     try:
-        token = request.headers.get('Authorization')[7:]
-        user = tokens.find_one({'token': token})
         email = user['email']
-        user1 = users.find_one({'email': email})
-        permission = user1['permissao']
+        user_data = await user_collection.find_one({'email': email})
+        
+        if user_data is None:
+            raise HTTPException(status_code=401, detail="Usuário não encontrado")
+        
+        permission = user_data['permissao']
+        
         if permission != "GESTAO":
-            return {"error": "Permissão negada"}, 401
+            raise HTTPException(status_code=401, detail="Permissão negada")
+
+        existing_aluno = await user_collection.find_one({'cpf': aluno.cpf})
+        if existing_aluno:
+            raise HTTPException(status_code=400, detail="CPF já está registrado")
+
+        aluno_dict = aluno.dict()  
+        aluno_dict["nome"] = aluno_dict["nome"].capitalize()
+        aluno_dict["permissao"] = "ALUNO"
+        aluno_dict["password"] = hash_password(aluno_dict["password"])
+        aluno_dict["notas"] = {}
+        if await user_collection.find_one({"email": aluno_dict["email"]}):
+            raise HTTPException(status_code=400, detail="Email já registrado")
+
+        result = await user_collection.insert_one(aluno_dict)
+        
+        return JSONResponse(content={"message": "Aluno criado com sucesso", "id": str(result.inserted_id)}, status_code=201)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+        
+
+@router.get("/get")
+async def get_alunos(user: dict = Depends(verify_token)):
+    try:
+        email = user['email']
+        user_data = await user_collection.find_one({'email': email})
+
+        if user_data is None:
+            raise HTTPException(status_code=401, detail="Usuário não encontrado")
+        
+        permission = user_data['permissao']
+        
+        if permission != "GESTAO":
+            raise HTTPException(status_code=401, detail="Permissão negada")
+
         lista_alunos = []
-        for aluno in alunos.find():
+        async for aluno in user_collection.find({'permissao': 'ALUNO'}):
             aluno['_id'] = str(aluno['_id'])
             lista_alunos.append(aluno)
-        return {"alunos": lista_alunos}, 200
-    except Exception as e:
-        return {"error": str(e)}, 500
 
-@alunos_bp.route('/aluno/<cpf>', methods=['GET'])
-def getAluno(cpf):
+        return JSONResponse(content={'alunos': lista_alunos}, status_code=200)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/get/{cpf}", response_model=Aluno)  
+async def get_aluno(cpf: str, user: dict = Depends(verify_token)):
     try:
-        token = request.headers.get('Authorization')[7:]
-        user = tokens.find_one({'token': token})
         email = user['email']
-        user1 = users.find_one({'email': email})
-        permission = user1['permissao']
+        user_data = await user_collection.find_one({'email': email})
+        permission = user_data['permissao']
         
         if permission != "GESTAO":
-            return {"error": "Permissão negada"}, 401
+            raise HTTPException(status_code=401, detail="Permissão negada")
         
-        aluno = alunos.find_one({'cpf': cpf})
+        aluno = await user_collection.find_one({'cpf': cpf})
         
         if aluno is None:
-            return {"error": "Aluno não encontrado"}, 404
+            raise HTTPException(status_code=404, detail="Aluno não encontrado")
         
-        aluno['_id'] = str(aluno['_id']) 
-        
-        return jsonify(aluno), 200  
+        return Aluno(**aluno)  
+
     except Exception as e:
-        return {"error": str(e)}, 500
-
-@alunos_bp.route('/aluno/grade/<data>', methods=['GET'])
-def getGrade(data):
-    try:
-        token = request.headers.get('Authorization')[7:]
-        user = tokens.find_one({'token': token})
-        email = user['email']
-        aluno = alunos.find_one({'email': email})
-
-        if data not in aluno['grade']:
-            return jsonify({"Data não encontrada": ""}), 200
-
-        return jsonify(aluno['grade'][data]), 200
-    except Exception as e:
-        return {"error": str(e)}, 500
-
-
-        
+        raise HTTPException(status_code=500, detail=str(e))

@@ -1,35 +1,59 @@
-from flask import Blueprint, request
-from config import users, tokens, avisos
-from flask_jwt_extended import jwt_required
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import JSONResponse
+from models.avisos import Aviso
+from database import avisos_collection, user_collection
+from utils.token import verify_token
 
-avisos_bp = Blueprint('avisos_bp', __name__)
+router = APIRouter()
 
-@avisos_bp.route('/aviso', methods=['GET'])
-@jwt_required()
-def get_avisos():
-    lista_avisos = []
-    for aviso in avisos.find():
-        aviso['_id'] = str(aviso['_id'])
-        lista_avisos.append(aviso)
-    return {'avisos': lista_avisos}, 200
+@router.post("/create")
+async def post_avisos(aviso: Aviso, user: dict = Depends(verify_token)):
+    try:
+        email = user['email']
+        user1 = await user_collection.find_one({'email': email})
+        permission = user1['permissao']
 
+        if permission == 'GESTAO':
+            await avisos_collection.insert_one({
+                'titulo': aviso.titulo,
+                'mensagem': aviso.mensagem,
+                'tipo': aviso.tipo,
+                'autor': email
+            })
+            return JSONResponse(content={'message': 'Aviso criado com sucesso'}, status_code=200)
+        else:
+            raise HTTPException(status_code=401, detail='Não é possível fazer a requisição')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/get")
+async def get_avisos(user: dict = Depends(verify_token)):
+    try:
+        lista_avisos = []
+        async for aviso in avisos_collection.find({}):
+            aviso['_id'] = str(aviso['_id'])
+            lista_avisos.append(aviso)
 
-@avisos_bp.route('/aviso', methods=['POST'])
-@jwt_required()
-def post_avisos():
-    token = request.headers.get('Authorization')[7:]
-    user = tokens.find_one({'token': token})
-    email = user['email']
-    user1 = users.find_one({'email': email})
-    permission = user1['permissao']
-    if permission == 'GESTAO':
-        data = request.get_json()
-        avisos.insert_one({
-            'titulo': data['titulo'],
-            'mensagem': data['mensagem'],
-            'autor': email
-        })
-        return {'message': 'Aviso criado com sucesso'}, 200
-    else:
-        return {'error': 'Não é possível fazer a requisição'}, 401
+        return JSONResponse(content={'avisos': lista_avisos}, status_code=200)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    
+@router.get("/get/{tipo}")
+async def get_avisos(tipo: str = "", user: dict = Depends(verify_token)):
+    try:
+        lista_avisos = []
+        
+        if tipo:
+            async for aviso in avisos_collection.find({'tipo': tipo}):
+                aviso['_id'] = str(aviso['_id'])
+                lista_avisos.append(aviso)
+        else:
+            async for aviso in avisos_collection.find({}):
+                aviso['_id'] = str(aviso['_id'])
+                lista_avisos.append(aviso)
+
+        return JSONResponse(content={'avisos': lista_avisos}, status_code=200)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 

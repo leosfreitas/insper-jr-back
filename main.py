@@ -1,32 +1,29 @@
-from flask import Flask
-from flask_bcrypt import Bcrypt
-from flask_cors import CORS
-from flask_jwt_extended import JWTManager
-import pymongo
-import certifi 
-from config import CONFIG
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from routes.users import router as user_router
+from routes.auth import router as auth_router 
+from routes.avisos import router as avisos_router
+from routes.alunos import router as alunos_router
 
-app = Flask(__name__)
-CORS(app)
+app = FastAPI()
 
-app.config.from_object(CONFIG)
+origins = [
+    "http://localhost:5173",
+]
 
-bcrypt = Bcrypt(app)
-jwt = JWTManager(app)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-client = pymongo.MongoClient(CONFIG.MONGO_URI, tlsCAFile=certifi.where())
+app.include_router(user_router, prefix="/user", tags=["user"])
+app.include_router(auth_router, prefix="/auth", tags=["auth"])  
+app.include_router(alunos_router, prefix="/alunos", tags=["alunos"])
+app.include_router(avisos_router, prefix="/avisos", tags=["avisos"])
 
-
-from routes.auth import auth_bp
-from routes.users import users_bp
-from routes.avisos import avisos_bp
-from routes.alunos import alunos_bp
-
-app.register_blueprint(users_bp)
-app.register_blueprint(auth_bp)
-app.register_blueprint(avisos_bp)
-app.register_blueprint(alunos_bp)
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.get("/")
+async def root():
+    return {"message": "API is running!"}
