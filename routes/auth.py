@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from database import user_collection, tokens_collection
 from schemas.login import UserLogin 
 from fastapi import Header
-from utils.hash import hash_password, verify_password 
+from utils.hash import verify_password 
 from utils.token import create_access_token
 from datetime import datetime, timedelta
 from apscheduler.schedulers.asyncio import AsyncIOScheduler

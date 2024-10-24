@@ -12,5 +12,5 @@ class AlunoResponse(BaseModel):
     email: EmailStr
     cpf: str
     nome: str
-    password : str
     sala: str
+    notas: dict

@@ -1,10 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from typing import List
 from database import user_collection
 from utils.token import verify_token
-from models.alunos import Aluno  
-from schemas.alunos import AlunoCreate
+from schemas.alunos import AlunoCreate, AlunoResponse
 from utils.hash import hash_password
 
 router = APIRouter()
@@ -41,7 +39,26 @@ async def create_aluno(aluno: AlunoCreate, user: dict = Depends(verify_token)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.delete("/delete/{cpf}", response_model=dict)
+async def delete_aluno(cpf: str, user: dict = Depends(verify_token)):
+    try:
+        email = user['email']
+        user_data = await user_collection.find_one({'email': email})
+        permission = user_data['permissao']
+
+        if permission != "GESTAO":
+            raise HTTPException(status_code=401, detail="Permissão negada")
         
+        aluno = await user_collection.find_one({'cpf': cpf})
+
+        if aluno is None:
+            raise HTTPException(status_code=404, detail="Aluno não encontrado")
+        
+        await user_collection.delete_one({'cpf': cpf})
+        return JSONResponse(content={"message": "Aluno deletado com sucesso"}, status_code=200)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/get")
 async def get_alunos(user: dict = Depends(verify_token)):
@@ -67,7 +84,7 @@ async def get_alunos(user: dict = Depends(verify_token)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/get/{cpf}", response_model=Aluno)  
+@router.get("/get/{cpf}", response_model=AlunoResponse)  
 async def get_aluno(cpf: str, user: dict = Depends(verify_token)):
     try:
         email = user['email']
@@ -81,8 +98,21 @@ async def get_aluno(cpf: str, user: dict = Depends(verify_token)):
         
         if aluno is None:
             raise HTTPException(status_code=404, detail="Aluno não encontrado")
-        
-        return Aluno(**aluno)  
 
+        aluno['id'] = str(aluno['_id'])
+        del aluno['_id']  
+
+        return AlunoResponse(**aluno)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) 
+    
+@router.get("/getNotas")
+async def get_notas(user: dict = Depends(verify_token)):
+    try:
+        email = user['email']
+        user = await user_collection.find_one({'email': email})
+        notas = user['notas']
+        return JSONResponse(content=notas, status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

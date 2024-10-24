@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import JSONResponse
-from database import user_collection, tokens_collection , alunos_collection
+from database import user_collection, tokens_collection
 from schemas.user import UserCreate, UserResponse  
 from utils.hash import hash_password
 

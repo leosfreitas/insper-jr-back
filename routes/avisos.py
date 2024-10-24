@@ -1,17 +1,17 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
-from models.avisos import Aviso
+from schemas.avisos import AvisoCreate
 from database import avisos_collection, user_collection
 from utils.token import verify_token
 
 router = APIRouter()
 
 @router.post("/create")
-async def post_avisos(aviso: Aviso, user: dict = Depends(verify_token)):
+async def post_avisos(aviso: AvisoCreate, user: dict = Depends(verify_token)):
     try:
         email = user['email']
-        user1 = await user_collection.find_one({'email': email})
-        permission = user1['permissao']
+        user = await user_collection.find_one({'email': email})
+        permission = user['permissao']
         if permission == 'GESTAO':
             await avisos_collection.insert_one({
                 'titulo': aviso.titulo,

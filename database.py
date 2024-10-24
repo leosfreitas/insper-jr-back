@@ -9,7 +9,7 @@ database = client.insperjr
 user_collection = database.get_collection("users") 
 tokens_collection = database.get_collection("tokens")
 avisos_collection = database.get_collection("avisos")
-alunos_collection = database.get_collection("alunos")
+grade_collection = database.get_collection("grade")
 
 async def connect_to_mongo():
     try:
