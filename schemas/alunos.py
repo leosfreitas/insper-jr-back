@@ -7,6 +7,11 @@ class AlunoCreate(BaseModel):
     password : str
     sala: str
 
+class AlunoEdit(BaseModel):
+    email: EmailStr
+    nome: str
+    sala: str
+
 class AlunoResponse(BaseModel):
     id: str
     email: EmailStr
@@ -14,3 +19,10 @@ class AlunoResponse(BaseModel):
     nome: str
     sala: str
     notas: dict
+
+class NotaAdd(BaseModel):
+    avaliacao: str
+    nota: str
+
+class NotaRemove(BaseModel):
+    avaliacao: str
