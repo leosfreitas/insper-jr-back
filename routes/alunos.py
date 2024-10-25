@@ -26,7 +26,6 @@ async def create_aluno(aluno: AlunoCreate, user: dict = Depends(verify_token)):
             raise HTTPException(status_code=400, detail="CPF já está registrado")
 
         aluno_dict = aluno.dict()  
-        aluno_dict["nome"] = aluno_dict["nome"].capitalize()
         aluno_dict["permissao"] = "ALUNO"
         aluno_dict["password"] = hash_password(aluno_dict["password"])
         aluno_dict["notas"] = {}
@@ -61,7 +60,7 @@ async def update_aluno(cpf: str, aluno: AlunoEdit, user: dict = Depends(verify_t
         updated_fields = {}
 
         if aluno.nome and aluno.nome != existing_aluno['nome']:
-            updated_fields["nome"] = aluno.nome.capitalize()
+            updated_fields["nome"] = aluno.nome
 
         if aluno.email and aluno.email != existing_aluno['email']:
             updated_fields["email"] = aluno.email 
@@ -173,6 +172,10 @@ async def add_nota(cpf: str, nota: NotaAdd, user: dict = Depends(verify_token)):
         
         aluno_notas = aluno['notas']
         aluno_notas[nota.avaliacao] = nota.nota
+        
+        if nota.avaliacao == "" or nota.nota == "":
+            raise HTTPException(status_code=400, detail="Avaliação ou nota não podem ser vazias")
+
         await user_collection.update_one({'cpf': cpf}, {"$set": {'notas': aluno_notas}})
         return JSONResponse(content={"message": "Nota adicionada com sucesso"}, status_code=200)
     except Exception as e:
