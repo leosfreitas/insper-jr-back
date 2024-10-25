@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from schemas.avisos import AvisoCreate
 from database import avisos_collection, user_collection
 from utils.token import verify_token
+from bson import ObjectId
 
 router = APIRouter()
 
@@ -20,6 +21,21 @@ async def post_avisos(aviso: AvisoCreate, user: dict = Depends(verify_token)):
                 'autor': email
             })
             return JSONResponse(content={'message': 'Aviso criado com sucesso'}, status_code=200)
+        else:
+            raise HTTPException(status_code=401, detail='Não é possível fazer a requisição')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/delete/{id}")
+async def delete_avisos(id: str, user: dict = Depends(verify_token)):
+    try:
+        email = user['email']
+        user = await user_collection.find_one({'email': email})
+        permission = user['permissao']
+        
+        if permission == 'GESTAO':
+            await avisos_collection.delete_one({'_id': ObjectId(id)})
+            return JSONResponse(content={'message': 'Aviso deletado com sucesso'}, status_code=200)
         else:
             raise HTTPException(status_code=401, detail='Não é possível fazer a requisição')
     except Exception as e:

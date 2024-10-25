@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from database import user_collection
 from utils.token import verify_token
-from schemas.alunos import AlunoCreate, AlunoResponse, AlunoEdit
+from schemas.alunos import AlunoCreate, AlunoResponse, AlunoEdit, NotaAdd, NotaRemove
 from utils.hash import hash_password
 
 router = APIRouter()
@@ -155,3 +155,53 @@ async def get_notas(user: dict = Depends(verify_token)):
         return JSONResponse(content=notas, status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/addNota/{cpf}", response_model=dict)
+async def add_nota(cpf: str, nota: NotaAdd, user: dict = Depends(verify_token)):
+    try:
+        email = user['email']
+        user_data = await user_collection.find_one({'email': email})
+        permission = user_data['permissao']
+
+        if permission != "GESTAO":
+            raise HTTPException(status_code=401, detail="Permissão negada")
+        
+        aluno = await user_collection.find_one({'cpf': cpf})
+        
+        if aluno is None:
+            raise HTTPException(status_code=404, detail="Aluno não encontrado")
+        
+        aluno_notas = aluno['notas']
+        aluno_notas[nota.avaliacao] = nota.nota
+        await user_collection.update_one({'cpf': cpf}, {"$set": {'notas': aluno_notas}})
+        return JSONResponse(content={"message": "Nota adicionada com sucesso"}, status_code=200)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+        
+@router.delete("/removeNota/{cpf}", response_model=dict)
+async def remove_nota(cpf: str, nota: NotaRemove, user: dict = Depends(verify_token)):
+    try:
+        email = user['email']
+        user_data = await user_collection.find_one({'email': email})
+        permission = user_data['permissao']
+
+        if permission != "GESTAO":
+            raise HTTPException(status_code=401, detail="Permissão negada")
+        
+        aluno = await user_collection.find_one({'cpf': cpf})
+
+        if aluno is None:
+            raise HTTPException(status_code=404, detail="Aluno não encontrado")
+        
+        aluno_notas = aluno['notas']
+        if nota.avaliacao not in aluno_notas:
+            raise HTTPException(status_code=404, detail="Avaliação não encontrada")
+        
+        del aluno_notas[nota.avaliacao]
+        await user_collection.update_one({'cpf': cpf}, {"$set": {'notas': aluno_notas}})
+        return JSONResponse(content={"message": "Nota removida com sucesso"}, status_code=200)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+

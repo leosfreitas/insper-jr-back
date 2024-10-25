@@ -19,3 +19,10 @@ class AlunoResponse(BaseModel):
     nome: str
     sala: str
     notas: dict
+
+class NotaAdd(BaseModel):
+    avaliacao: str
+    nota: str
+
+class NotaRemove(BaseModel):
+    avaliacao: str
