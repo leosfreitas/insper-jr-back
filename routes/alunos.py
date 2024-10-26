@@ -109,7 +109,7 @@ async def get_alunos(user: dict = Depends(verify_token)):
         
         permission = user_data['permissao']
         
-        if permission != "GESTAO":
+        if permission != "GESTAO" and permission != "PROFESSOR":
             raise HTTPException(status_code=401, detail="Permissão negada")
 
         lista_alunos = []
@@ -129,7 +129,7 @@ async def get_aluno(cpf: str, user: dict = Depends(verify_token)):
         user_data = await user_collection.find_one({'email': email})
         permission = user_data['permissao']
         
-        if permission != "GESTAO":
+        if permission != "GESTAO" and permission != "PROFESSOR":
             raise HTTPException(status_code=401, detail="Permissão negada")
         
         aluno = await user_collection.find_one({'cpf': cpf})

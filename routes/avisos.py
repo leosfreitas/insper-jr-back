@@ -13,7 +13,7 @@ async def post_avisos(aviso: AvisoCreate, user: dict = Depends(verify_token)):
         email = user['email']
         user = await user_collection.find_one({'email': email})
         permission = user['permissao']
-        if permission == 'GESTAO':
+        if permission == 'GESTAO' or permission == 'PROFESSOR':
             await avisos_collection.insert_one({
                 'titulo': aviso.titulo,
                 'mensagem': aviso.mensagem,
@@ -33,7 +33,7 @@ async def delete_avisos(id: str, user: dict = Depends(verify_token)):
         user = await user_collection.find_one({'email': email})
         permission = user['permissao']
         
-        if permission == 'GESTAO':
+        if permission == 'GESTAO' or permission == 'PROFESSOR':
             await avisos_collection.delete_one({'_id': ObjectId(id)})
             return JSONResponse(content={'message': 'Aviso deletado com sucesso'}, status_code=200)
         else:
@@ -47,7 +47,7 @@ async def get_avisos(user: dict = Depends(verify_token)):
         email = user['email']
         user = await user_collection.find_one({'email': email})
         permission = user['permissao']
-        if permission == 'GESTAO':
+        if permission == 'GESTAO' or permission == 'PROFESSOR':
             lista_avisos = []
             async for aviso in avisos_collection.find({}):
                 aviso['_id'] = str(aviso['_id'])
