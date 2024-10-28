@@ -29,5 +29,7 @@ app.include_router(grade_router, prefix="/grade", tags=["grade"])
 app.include_router(info_router, prefix="/info", tags=["info"])
 
 @app.get("/")
+
+
 async def root():
     return {"message": "API is running!"}
