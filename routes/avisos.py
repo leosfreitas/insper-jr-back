@@ -18,7 +18,7 @@ async def post_avisos(aviso: AvisoCreate, user: dict = Depends(verify_token)):
                 'titulo': aviso.titulo,
                 'mensagem': aviso.mensagem,
                 'tipo': aviso.tipo,
-                'autor': email
+                'autor': user['nome']
             })
             return JSONResponse(content={'message': 'Aviso criado com sucesso'}, status_code=200)
         else:
