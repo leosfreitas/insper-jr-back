@@ -36,7 +36,7 @@ async def create_aluno(aluno: AlunoCreate, user: dict = Depends(verify_token)):
 
 
         email = {
-                "from": "Cursinho Insper <onboarding@resend.dev>",
+                "from": "Cursinho Insper <gerenciamento@cursinho.insper.com>",
                 "to": aluno_dict["email"],
                 "subject": "Confirmação de cadastro",
                 "text": f"Você está recebendo esse email porque você foi cadastrado na plataforma do Cursinho Insper! Aqui está a sua senha: {aluno_dict['password']}"

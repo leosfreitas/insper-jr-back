@@ -29,7 +29,7 @@ async def register(user_create: UserCreate, user: dict = Depends(verify_token)):
             raise HTTPException(status_code=400, detail="Email já registrado")
         
         email = {
-                "from": "Cursinho Insper <onboarding@resend.dev>",
+                "from": "Cursinho Insper <gerenciamento@cursinho.insper.com>",
                 "to": user_dict["email"],
                 "subject": "Confirmação de cadastro",
                 "text": f"Você está recebendo esse email porque você foi cadastrado na plataforma do Cursinho Insper! Aqui está a sua senha: {user_dict['password']}"
