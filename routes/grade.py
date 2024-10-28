@@ -31,7 +31,7 @@ async def delete_grade(id: str, user: dict = Depends(verify_token)):
         user = await user_collection.find_one({'email': email})
         permission = user['permissao']
 
-        if permission == 'GESTAO' or permission == 'PROFESSOR':
+        if permission == 'GESTAO':
             await grade_collection.delete_one({'_id': ObjectId(id)})
             return JSONResponse(content={'message': 'Grade deletada com sucesso'}, status_code=200)
         else:
@@ -45,7 +45,7 @@ async def post_grade(grade: GradeCreate, user: dict = Depends(verify_token)):
         email = user['email']
         user = await user_collection.find_one({'email': email})
         permission = user['permissao']
-        if permission == 'GESTAO' or permission == 'PROFESSOR':
+        if permission == 'GESTAO':
             await grade_collection.insert_one({
                 'data': grade.data,
                 'horario': grade.horario,
