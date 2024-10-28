@@ -13,3 +13,9 @@ class UserResponse(BaseModel):
     cpf: str
     email: EmailStr
     permissao: str
+
+class UserEdit(BaseModel):
+    nome: str
+    cpf: str
+    email: EmailStr
+    permissao: str
