@@ -1,9 +1,12 @@
+from schemas.alunos import AlunoCreate, AlunoResponse, AlunoEdit, NotaAdd, NotaRemove
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from database import user_collection
 from utils.token import verify_token
-from schemas.alunos import AlunoCreate, AlunoResponse, AlunoEdit, NotaAdd, NotaRemove
 from utils.hash import hash_password
+import resend
+
+resend.api_key = "re_BCc8xFut_GGA9FjBGEwojKF6SsLHBYdCp"
 
 router = APIRouter()
 
@@ -27,13 +30,24 @@ async def create_aluno(aluno: AlunoCreate, user: dict = Depends(verify_token)):
 
         aluno_dict = aluno.dict()  
         aluno_dict["permissao"] = "ALUNO"
-        aluno_dict["password"] = hash_password(aluno_dict["password"])
         aluno_dict["notas"] = {}
         if await user_collection.find_one({"email": aluno_dict["email"]}):
             raise HTTPException(status_code=400, detail="Email já registrado")
 
-        result = await user_collection.insert_one(aluno_dict)
+
+        email = {
+                "from": "Cursinho Insper <onboarding@resend.dev>",
+                "to": aluno_dict["email"],
+                "subject": "Confirmação de cadastro",
+                "text": f"Você está recebendo esse email porque você foi cadastrado na plataforma do Cursinho Insper! Aqui está a sua senha: {aluno_dict['password']}"
+            }
         
+        resend.Emails.send(email)
+
+        aluno_dict["password"] = hash_password(aluno_dict["password"])
+        
+        result = await user_collection.insert_one(aluno_dict)
+
         return JSONResponse(content={"message": "Aluno criado com sucesso", "id": str(result.inserted_id)}, status_code=201)
 
     except Exception as e:

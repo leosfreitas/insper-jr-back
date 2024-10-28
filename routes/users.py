@@ -1,11 +1,14 @@
+from schemas.user import UserCreate, UserResponse, UserEdit 
+from database import user_collection, tokens_collection
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import JSONResponse
+from utils.hash import hash_password
 from utils.token import verify_token
 from bson import ObjectId
-from database import user_collection, tokens_collection
-from schemas.user import UserCreate, UserResponse, UserEdit 
-from utils.hash import hash_password
+import resend
+
+resend.api_key = "re_BCc8xFut_GGA9FjBGEwojKF6SsLHBYdCp"
 
 router = APIRouter()
 
@@ -22,10 +25,19 @@ async def register(user_create: UserCreate, user: dict = Depends(verify_token)):
             raise HTTPException(status_code=401, detail="Permissão negada")
         
         user_dict = user_create.dict()
-        user_dict["password"] = hash_password(user_dict["password"])
         if await user_collection.find_one({"email": user_dict["email"]}):
             raise HTTPException(status_code=400, detail="Email já registrado")
         
+        email = {
+                "from": "Cursinho Insper <onboarding@resend.dev>",
+                "to": user_dict["email"],
+                "subject": "Confirmação de cadastro",
+                "text": f"Você está recebendo esse email porque você foi cadastrado na plataforma do Cursinho Insper! Aqui está a sua senha: {user_dict['password']}"
+            }
+        
+        resend.Emails.send(email)
+
+        user_dict["password"] = hash_password(user_dict["password"])
         result = await user_collection.insert_one(user_dict)
         user_dict["_id"] = str(result.inserted_id)
         return JSONResponse(content={"message": "Usuário criado com sucesso", "user": user_dict}, status_code=201)
