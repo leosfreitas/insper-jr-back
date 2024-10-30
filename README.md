@@ -34,12 +34,12 @@ Certifique-se de ter o Python 3.7 ou superior instalado. Você pode baixar em [p
 
 2. Crie um ambiente virtual:
    ```bash
-    python -m venv venv
+    python -m venv venv # No Mac, use: python3 -m venv venv
     venv\Scripts\activate # No Mac, use: source venv/bin/activate 
 
 3. Instale as dependências:
     ```bash
-    pip install -r requirements.txt
+    pip install -r requirements.txt  # No Mac, use: pip3 install -r requirements.txt
 
 4. Inicie o servidor:
     ```bash
