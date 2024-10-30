@@ -9,6 +9,18 @@ router = APIRouter()
 
 @router.get("/get")
 async def get_grades(user: dict = Depends(verify_token)):
+    """
+    Obtém todas as grades disponíveis.
+
+    Essa função busca grades na coleção `grade_collection`. O acesso é permitido
+    apenas a usuários com permissão de 'GESTAO' ou 'PROFESSOR'.
+
+    Args:
+        user (dict): O dicionário do usuário, obtido através da verificação do token.
+
+    Returns:
+        JSONResponse: Um JSON contendo uma lista de grades ou uma mensagem de erro.
+    """
     try:
         email = user['email']
         user = await user_collection.find_one({'email': email})
@@ -26,6 +38,19 @@ async def get_grades(user: dict = Depends(verify_token)):
     
 @router.delete("/delete/{id}")
 async def delete_grade(id: str, user: dict = Depends(verify_token)):
+    """
+    Remove uma grade específica pelo ID.
+
+    Essa função exclui uma grade da coleção `grade_collection` com base no ID
+    fornecido. O acesso é permitido apenas a usuários com permissão de 'GESTAO'.
+
+    Args:
+        id (str): O ID da grade a ser excluída.
+        user (dict): O dicionário do usuário, obtido através da verificação do token.
+
+    Returns:
+        JSONResponse: Um JSON confirmando a exclusão ou uma mensagem de erro.
+    """
     try:
         email = user['email']
         user = await user_collection.find_one({'email': email})
@@ -41,6 +66,20 @@ async def delete_grade(id: str, user: dict = Depends(verify_token)):
 
 @router.post("/create")
 async def post_grade(grade: GradeCreate, user: dict = Depends(verify_token)):
+    """
+    Cria uma nova grade.
+
+    Essa função insere uma nova grade na coleção `grade_collection` utilizando
+    os dados fornecidos no corpo da requisição. O acesso é permitido apenas a
+    usuários com permissão de 'GESTAO'.
+
+    Args:
+        grade (GradeCreate): Os dados da grade a serem criados.
+        user (dict): O dicionário do usuário, obtido através da verificação do token.
+
+    Returns:
+        JSONResponse: Um JSON confirmando a criação da grade ou uma mensagem de erro.
+    """
     try:
         email = user['email']
         user = await user_collection.find_one({'email': email})
@@ -63,6 +102,21 @@ async def post_grade(grade: GradeCreate, user: dict = Depends(verify_token)):
 
 @router.get("/{data}")
 async def get_grade(data: str, user: dict = Depends(verify_token)):
+    """
+    Obtém grades filtradas por data e sala.
+
+    Essa função busca grades na coleção `grade_collection` filtradas pela data
+    fornecida e pela sala do usuário. O acesso é permitido apenas a usuários com
+    permissão de 'GESTAO' ou 'PROFESSOR'. Caso contrário, o acesso é limitado
+    aos alunos que pertencem à sala do usuário.
+
+    Args:
+        data (str): A data das grades a serem buscadas.
+        user (dict): O dicionário do usuário, obtido através da verificação do token.
+
+    Returns:
+        JSONResponse: Um JSON contendo as grades filtradas ou uma mensagem de erro.
+    """
     try:
         email = user['email']
         user = await user_collection.find_one({'email': email})
@@ -87,4 +141,3 @@ async def get_grade(data: str, user: dict = Depends(verify_token)):
     
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-

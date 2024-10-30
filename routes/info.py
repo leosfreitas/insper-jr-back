@@ -8,6 +8,17 @@ router = APIRouter()
 
 @router.get("/getNumeroAlunosPresencial")
 async def get_numero_alunos_presencial(user: dict = Depends(verify_token)):
+    """
+    Obtém o número de alunos matriculados na modalidade presencial.
+
+    - **Requisitos**: O usuário deve ter permissão de 'GESTAO'.
+    - **Parâmetros**:
+        - user (dict): Dicionário contendo informações do usuário autenticado.
+    - **Retorno**:
+        - JSONResponse: Retorna o número total de alunos presenciais como JSON.
+    - **Exceções**:
+        - HTTPException: Lança uma exceção 401 se o usuário não tiver permissão, ou uma exceção 400 em caso de erro.
+    """
     try:
         email = user['email']
         user = await user_collection.find_one({'email': email})
@@ -20,10 +31,21 @@ async def get_numero_alunos_presencial(user: dict = Depends(verify_token)):
             raise HTTPException(status_code=401, detail='Não é possível fazer a requisição')
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
+
 
 @router.get("/getNumeroAlunosOnline")
 async def get_numero_alunos_online(user: dict = Depends(verify_token)):
+    """
+    Obtém o número de alunos matriculados na modalidade online.
+
+    - **Requisitos**: O usuário deve ter permissão de 'GESTAO'.
+    - **Parâmetros**:
+        - user (dict): Dicionário contendo informações do usuário autenticado.
+    - **Retorno**:
+        - JSONResponse: Retorna o número total de alunos online como JSON.
+    - **Exceções**:
+        - HTTPException: Lança uma exceção 401 se o usuário não tiver permissão, ou uma exceção 400 em caso de erro.
+    """
     try:
         email = user['email']
         user = await user_collection.find_one({'email': email})
@@ -36,9 +58,21 @@ async def get_numero_alunos_online(user: dict = Depends(verify_token)):
             raise HTTPException(status_code=401, detail='Não é possível fazer a requisição')
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
+
+
 @router.get("/getNumeroProfessores")
 async def get_numero_professores(user: dict = Depends(verify_token)):
+    """
+    Obtém o número total de professores cadastrados.
+
+    - **Requisitos**: O usuário deve ter permissão de 'GESTAO'.
+    - **Parâmetros**:
+        - user (dict): Dicionário contendo informações do usuário autenticado.
+    - **Retorno**:
+        - JSONResponse: Retorna o número total de professores como JSON.
+    - **Exceções**:
+        - HTTPException: Lança uma exceção 401 se o usuário não tiver permissão, ou uma exceção 400 em caso de erro.
+    """
     try:
         email = user['email']
         user = await user_collection.find_one({'email': email})
@@ -51,9 +85,21 @@ async def get_numero_professores(user: dict = Depends(verify_token)):
             raise HTTPException(status_code=401, detail='Não é possível fazer a requisição')
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
+
+
 @router.get("/getNumeroGestao")
 async def get_numero_gestao(user: dict = Depends(verify_token)):
+    """
+    Obtém o número total de usuários com permissão de gestão.
+
+    - **Requisitos**: O usuário deve ter permissão de 'GESTAO'.
+    - **Parâmetros**:
+        - user (dict): Dicionário contendo informações do usuário autenticado.
+    - **Retorno**:
+        - JSONResponse: Retorna o número total de usuários de gestão como JSON.
+    - **Exceções**:
+        - HTTPException: Lança uma exceção 401 se o usuário não tiver permissão, ou uma exceção 400 em caso de erro.
+    """
     try:
         email = user['email']
         user = await user_collection.find_one({'email': email})
@@ -70,6 +116,17 @@ async def get_numero_gestao(user: dict = Depends(verify_token)):
 
 @router.get("/getNotasPresencial")
 async def get_notas_presencial(user: dict = Depends(verify_token)):
+    """
+    Obtém as notas dos alunos matriculados na modalidade presencial.
+
+    - **Requisitos**: O usuário deve ter permissão de 'GESTAO'.
+    - **Parâmetros**:
+        - user (dict): Dicionário contendo informações do usuário autenticado.
+    - **Retorno**:
+        - JSONResponse: Retorna as notas dos alunos presenciais como JSON.
+    - **Exceções**:
+        - HTTPException: Lança uma exceção 401 se o usuário não tiver permissão, ou uma exceção 400 em caso de erro.
+    """
     try:
         email = user['email']
         user = await user_collection.find_one({'email': email})
@@ -84,9 +141,21 @@ async def get_notas_presencial(user: dict = Depends(verify_token)):
             raise HTTPException(status_code=401, detail='Não é possível fazer a requisição')
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
+
+
 @router.get("/getNotasOnline")
 async def get_notas_online(user: dict = Depends(verify_token)):
+    """
+    Obtém as notas dos alunos matriculados na modalidade online.
+
+    - **Requisitos**: O usuário deve ter permissão de 'GESTAO'.
+    - **Parâmetros**:
+        - user (dict): Dicionário contendo informações do usuário autenticado.
+    - **Retorno**:
+        - JSONResponse: Retorna as notas dos alunos online como JSON.
+    - **Exceções**:
+        - HTTPException: Lança uma exceção 401 se o usuário não tiver permissão, ou uma exceção 400 em caso de erro.
+    """
     try:
         email = user['email']
         user = await user_collection.find_one({'email': email})
@@ -101,9 +170,21 @@ async def get_notas_online(user: dict = Depends(verify_token)):
             raise HTTPException(status_code=401, detail='Não é possível fazer a requisição')
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
+
+
 @router.get("/getNotasGerais")
 async def get_notas_gerais(user: dict = Depends(verify_token)):
+    """
+    Obtém as notas de todos os alunos cadastrados.
+
+    - **Requisitos**: O usuário deve ter permissão de 'GESTAO'.
+    - **Parâmetros**:
+        - user (dict): Dicionário contendo informações do usuário autenticado.
+    - **Retorno**:
+        - JSONResponse: Retorna as notas de todos os alunos como JSON.
+    - **Exceções**:
+        - HTTPException: Lança uma exceção 401 se o usuário não tiver permissão, ou uma exceção 400 em caso de erro.
+    """
     try:
         email = user['email']
         user = await user_collection.find_one({'email': email})
@@ -118,4 +199,3 @@ async def get_notas_gerais(user: dict = Depends(verify_token)):
             raise HTTPException(status_code=401, detail='Não é possível fazer a requisição')
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
